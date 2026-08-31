@@ -179,10 +179,10 @@ and runtime parents on TypeScript. Importing a declared subprocess entrypoint
 compiles the fixed test entry set and its workspace dependencies into one fresh
 invocation directory under `.artifacts/vitest-workers/`.
 
-The seven application subprocess entries run as plain Node JavaScript without a
+The eight application subprocess entries run as plain Node JavaScript without a
 TypeScript loader: SQLite read-only snapshots, database verification, Tailscale
-route ownership, the service relay, its POSIX and Windows anchors, and the memory
-plugin's KNN child. The same generation also compiles the fake-backend TUI
+route ownership, the service relay, its POSIX and Windows anchors, the memory
+plugin's KNN child, and managed GitHub credential resolution. The same generation also compiles the fake-backend TUI
 fixture's four runtime roots together: the real TUI, embedded reply producer,
 reply metadata reader, and outbound normalizer. Shared chunks preserve their
 module and WeakMap identity. Generated TUI fixtures remain `.mts` files: Node
