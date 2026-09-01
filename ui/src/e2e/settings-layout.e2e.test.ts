@@ -230,6 +230,64 @@ suite.define(() => {
           path: path.join(proofDir, "automations-overview.png"),
         });
       }
+
+      await page.setViewportSize({ height: 844, width: 390 });
+      await expect
+        .poll(() =>
+          page.evaluate(() => {
+            const mobileTitle = document.querySelector<HTMLElement>(".content-header .page-title");
+            const mobileTabs = document.querySelector<HTMLElement>(".cron-toolbar__primary");
+            if (!mobileTitle || !mobileTabs) {
+              return null;
+            }
+            return Math.round(
+              mobileTitle.getBoundingClientRect().left - mobileTabs.getBoundingClientRect().left,
+            );
+          }),
+        )
+        .toBe(0);
+      const mobileGeometry = await page.evaluate(() => {
+        const box = (selector: string) => {
+          const element = document.querySelector<HTMLElement>(selector);
+          if (!element) {
+            throw new Error(`Mobile Automations layout is missing ${selector}`);
+          }
+          const rect = element.getBoundingClientRect();
+          return {
+            bottom: Math.round(rect.bottom),
+            left: Math.round(rect.left),
+            top: Math.round(rect.top),
+          };
+        };
+        const header = document.querySelector<HTMLElement>(".content-header");
+        if (!header) {
+          throw new Error("Mobile Automations layout is missing its header");
+        }
+        return {
+          actions: box(".content-header .page-header-actions"),
+          header: box(".content-header"),
+          headerClientHeight: header.clientHeight,
+          headerScrollHeight: header.scrollHeight,
+          subtitle: box(".content-header .page-subtitle"),
+          tabs: box(".cron-toolbar__primary"),
+          title: box(".content-header .page-title"),
+        };
+      });
+      expect(mobileGeometry.title.left).toBe(mobileGeometry.tabs.left);
+      expect(mobileGeometry.actions.top).toBeGreaterThanOrEqual(mobileGeometry.subtitle.bottom);
+      expect(mobileGeometry.header.bottom).toBeGreaterThanOrEqual(mobileGeometry.actions.bottom);
+      expect(mobileGeometry.headerScrollHeight).toBeLessThanOrEqual(
+        mobileGeometry.headerClientHeight,
+      );
+
+      if (proofEnabled) {
+        const proofDir = path.join(suite.artifactDir, "settings-layout-audit");
+        await page.screenshot({
+          animations: "disabled",
+          fullPage: true,
+          path: path.join(proofDir, "automations-overview-mobile.png"),
+        });
+      }
     } finally {
       await context.close();
     }
