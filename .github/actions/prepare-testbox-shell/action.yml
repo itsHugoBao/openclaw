@@ -1,14 +1,38 @@
 name: Prepare Testbox shell
-description: Pin the checked-out base ref and expose the setup-node toolchain to Testbox.
+description: Pin the checked-out base ref and expose the prepared toolchains to Testbox.
 
 inputs:
   base-ref:
     description: Event base for pull requests, or ref to treat as origin/main for manual runs; defaults to HEAD.
     required: false
+  go-version:
+    description: Go version to install and expose to Testbox; empty skips Go setup.
+    required: false
 
 runs:
   using: composite
   steps:
+    - name: Setup Go environment
+      if: inputs.go-version != ''
+      uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      with:
+        go-version: ${{ inputs.go-version }}
+        cache: false
+
+    - name: Expose Go tools
+      if: inputs.go-version != ''
+      shell: bash
+      env:
+        TESTBOX_GO_VERSION: ${{ inputs.go-version }}
+      run: |
+        set -euo pipefail
+
+        test "$(go env GOVERSION)" = "go${TESTBOX_GO_VERSION}"
+        go_root="$(go env GOROOT)"
+        for tool in go gofmt; do
+          sudo ln -sf "$go_root/bin/$tool" "/usr/local/bin/$tool"
+        done
+
     - name: Pin Testbox base and Node tools
       shell: bash
       env:
